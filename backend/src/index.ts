@@ -6,14 +6,14 @@ import mongoose from "mongoose";
 import path from "path";
 import userRoutes from "./routes/users";
 import messageRoutes from "./routes/messages";
-import roomRoutes from "./routes/rooms";
+// import roomRoutes from "./routes/rooms";
 import eventRoutes from "./routes/events";
 import paymentRoutes from "./routes/payments";
 import orderRoutes from "./routes/orders";
-import livekitRoutes from "./routes/livekit";
+// import livekitRoutes from "./routes/livekit";
 import allEventRoutes from "./routes/allEvents";
-import streamRoutes from "./routes/stream";
-import blockRoutes from "./routes/blocks";
+// import streamRoutes from "./routes/stream";
+// import blockRoutes from "./routes/blocks";
 import discountRoutes from "./routes/discounts";
 import chatBotRoutes from "./routes/chatBotRoutes";
 import Oauth from "./routes/oauth"
@@ -26,7 +26,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes";
 import { createRouteHandler } from "uploadthing/express";
 import { uploadRouter } from "./uploadthing";
-import { WebhookReceiver } from "livekit-server-sdk";
+// import { WebhookReceiver } from "livekit-server-sdk";
 import Stream from "./models/stream";
 
 dotenv.config();
@@ -39,10 +39,10 @@ mongoose
 
 const app = express();
 const server = http.createServer(app);
-const receiver = new WebhookReceiver(
-  process.env.LIVEKIT_API_KEY!,
-  process.env.LIVEKIT_API_SECRET!
-);
+// const receiver = new WebhookReceiver(
+//   process.env.LIVEKIT_API_KEY!,
+//   process.env.LIVEKIT_API_SECRET!
+// );
 
 app.use(express.json());
 app.use(cookieParser());
@@ -64,50 +64,50 @@ app.use("/api/request", RequestOauth);
 app.use("/api/oauth", Oauth);
 app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
-app.use("/api/room", roomRoutes);
+// app.use("/api/room", roomRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/allEvents", allEventRoutes);
-app.use("/api/livekit", livekitRoutes);
+// app.use("/api/livekit", livekitRoutes);
 app.use("/api/authRoutes", authRoutes);
-app.use("/api/stream", streamRoutes);
+// app.use("/api/stream", streamRoutes);
 app.use("/api/chatbot", chatBotRoutes);
 app.use("/api/discounts", discountRoutes);
-app.use("/api/block", blockRoutes);
-app.use(
-  "/api/webhooks/livekit",
-  express.raw({ type: "application/webhook+json" })
-);
-app.post("/api/webhooks/livekit", async (req, res) => {
-  try {
-    const body = req.body;
+// app.use("/api/block", blockRoutes);
+// app.use(
+//   "/api/webhooks/livekit",
+//   express.raw({ type: "application/webhook+json" })
+// );
+// app.post("/api/webhooks/livekit", async (req, res) => {
+//   try {
+//     const body = req.body;
 
-    const authorization = req.get("Authorization");
-    if (!authorization) {
-      return res.status(400).json({ message: "No authorization header" });
-    }
+//     const authorization = req.get("Authorization");
+//     if (!authorization) {
+//       return res.status(400).json({ message: "No authorization header" });
+//     }
 
-    const event = await receiver.receive(body, authorization);
-    if (event.event === "ingress_ended") {
-      await Stream.updateOne(
-        { ingressId: event.ingressInfo?.ingressId },
-        { $set: { isLive: false } }
-      );
-    }
-    if (event.event === "ingress_started") {
-      await Stream.updateOne(
-        { ingressId: event.ingressInfo?.ingressId },
-        { $set: { isLive: true } }
-      );
-    }
+//     const event = await receiver.receive(body, authorization);
+//     if (event.event === "ingress_ended") {
+//       await Stream.updateOne(
+//         { ingressId: event.ingressInfo?.ingressId },
+//         { $set: { isLive: false } }
+//       );
+//     }
+//     if (event.event === "ingress_started") {
+//       await Stream.updateOne(
+//         { ingressId: event.ingressInfo?.ingressId },
+//         { $set: { isLive: true } }
+//       );
+//     }
 
-    res.status(200).send("OK");
-  } catch (error) {
-    console.error("Error processing webhook:", error);
-    res.status(500).json({ message: "Something went wrong!" });
-  }
-});
+//     res.status(200).send("OK");
+//   } catch (error) {
+//     console.error("Error processing webhook:", error);
+//     res.status(500).json({ message: "Something went wrong!" });
+//   }
+// });
 app.use(
   "/api/uploadthing",
   createRouteHandler({
