@@ -1,5 +1,6 @@
 import { faker } from "@faker-js/faker";
 import Event from "../models/event";
+import ollama from 'ollama'
 
 const categories = [
   "nature",
@@ -43,9 +44,8 @@ export const generateEvents = async (numEvents: number, users: any[]) => {
     const postalCode = faker.location.zipCode();
     const province = faker.location.state();
     const fullAddress = `${city}, ${province}, ${country}, ${postalCode}`;
-    const event = new Event({
+    const randomEvent: any = {
       title: faker.music.songName(),
-      description: faker.lorem.paragraphs(2),
       startTime: startTime,
       endTime: endTime,
       capacity: faker.number.int({ min: 100, max: 500 }),
@@ -115,7 +115,14 @@ export const generateEvents = async (numEvents: number, users: any[]) => {
         "Auction",
         "Hackathon",
       ]),
-      artistName: faker.person.fullName(),
+      artistName: faker.person.fullName(),};
+    const randomDescriptionSentences = await ollama.chat({
+      model: 'llama3.1',
+      messages: [{ role: 'user', content: `Generate a description for an event. Here are some information about the event:${JSON.stringify(randomEvent)}` }],
+    })
+    randomEvent['description'] = randomDescriptionSentences.message.content;
+    const event = new Event({
+      ...randomEvent,
       imageUrls: imageUrls,
       tickets: [],
       roomChatLink: faker.internet.url(),

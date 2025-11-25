@@ -6,6 +6,9 @@ import Ticket from "../models/ticket";
 import mongoose from "mongoose";
 import Discount, { DiscountType } from "../models/discount";
 import { joinLocation } from "../utils/joinLocation";
+import { generateOneSingleEmbeddings } from "../middleware/event_des_embed";
+import * as eventEmbeddedDescriptionConstants from "../utils/constants/event-embedded-description";
+import { Tensor } from "@huggingface/transformers/types/utils/tensor";
 
 const router = express.Router();
 
@@ -622,6 +625,64 @@ router.get("/fetch", verifyToken, async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Failed to fetch event:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/addEmbeddedDescriptions", async (req: Request, res: Response) => {
+  try {
+    const batchSize = eventEmbeddedDescriptionConstants.eventEmbeddedDesWriteBatchSize;
+    const eventsId: string[] = req.body.eventsId || [];
+    // const embeddedDescriptions: Record<string, number[]> = req.body.embeddedDescriptions || [];
+
+    const embeddedDescriptions: Record<string, Tensor> = {};
+    for (const id of eventsId) {
+      embeddedDescriptions[id] = await generateOneSingleEmbeddings(id);
+    }
+
+    for (let i = 0; i < eventsId.length; i += batchSize) {
+      const batch = eventsId.slice(i, i + batchSize);
+
+      const ops = batch.map((id) => ({
+        updateOne: {
+          filter: { _id: new mongoose.Types.ObjectId(id) },
+          update: { $set: { embeddedDescription: embeddedDescriptions[id] } },
+        },
+      }));
+
+      if (ops.length > 0) {
+        await Event.collection.bulkWrite(ops, { ordered: false });
+      }
+
+    }
+
+    res.status(200).json({ message: "Embedded descriptions updated successfully" });
+  } catch (error) {
+    console.error("Failed to add embedded description:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/addOneEmbeddedDes", async (req: Request, res: Response) => {
+  try {
+    const eventId: string = req.body.eventId;
+    const embeddedDescriptions_id = await generateOneSingleEmbeddings(eventId);
+    const batch = [eventId];
+
+    const ops = batch.map((id) => ({
+      updateOne: {
+        filter: { _id: new mongoose.Types.ObjectId(id) },
+        update: { $set: { embeddedDescription: embeddedDescriptions_id} },
+      },
+    }));
+
+    if (ops.length > 0) {
+      await Event.collection.bulkWrite(ops, { ordered: false });
+    }
+
+    res.status(200).json({ message: "Embedded descriptions updated successfully" });
+  } catch (error) {
+    console.error("Failed to add embedded description:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

@@ -12,6 +12,7 @@ export type EventType = {
   _id: string;
   title: string;
   description: string;
+  embeddedDescription?: number[];
   startTime: Date;
   endTime: Date;
   venueId?: string;
@@ -39,10 +40,10 @@ const locationSchema = new mongoose.Schema(
 );
 
 // Update the mongoose schema for Event
-// Update the mongoose schema for Event
 const eventSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
+  embeddedDescription: { type: [Number], required: false },
   startTime: { type: Date, required: true },
   endTime: { type: Date, required: true },
   venueId: {
