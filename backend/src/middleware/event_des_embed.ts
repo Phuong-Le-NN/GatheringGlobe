@@ -26,12 +26,51 @@ const MODEL_NAME = 'Xenova/all-MiniLM-L6-v2';
 //     return output.tolist();
 // }
 
-export async function generateOneSingleEmbeddings(text: string) {
-    const extractor = await pipeline('feature-extraction', MODEL_NAME, { dtype: 'fp16' });
-    const query_embedding = await extractor(text, { /* ... options */ });
-    return query_embedding;
+let extractor: any = null;
+
+// Initialize the pipeline once
+async function initExtractor() {
+  if (!extractor) {
+    extractor = await pipeline('feature-extraction', MODEL_NAME, { dtype: 'fp32' });
+  }
 }
 
+// Generate a single 384-dim embedding for a text
+export async function generateOneSingleEmbedding(text: string): Promise<number[]> {
+    await initExtractor();
+
+    // if (!text || text.trim().length === 0) {
+    //     // Return a zero vector for empty text
+    //     return Array(384).fill(0);
+    // }
+
+    // // Get token-level embeddings
+    // const tensor = await extractor(text);
+    // const embeddingsPerToken: number[][] = await tensor.tolist();
+
+    // // Ensure token-level embeddings are valid
+    // const tokenCount = embeddingsPerToken.length;
+    // const dimension = embeddingsPerToken[0]?.length || 384;
+
+    // // Mean pooling over tokens, ignoring NaNs
+    // const meanEmbedding = Array(dimension).fill(0);
+    // for (const tokenVec of embeddingsPerToken) {
+    //     for (let i = 0; i < dimension; i++) {
+    //     const val = tokenVec[i];
+    //     meanEmbedding[i] += (typeof val === 'number' && !isNaN(val)) ? val : 0;
+    //     }
+    // }
+
+    // for (let i = 0; i < dimension; i++) {
+    //     meanEmbedding[i] /= tokenCount || 1;
+    // }
+
+    // return meanEmbedding;
+
+    const result = await extractor(text, { pooling: 'mean', normalize: true});
+    // result.ort_tensor.cpuData is typically a TypedArray (Float32Array); convert to number[]
+    return Array.from(result.ort_tensor.cpuData);
+}
 
 const descriptions = [
     "A sleek, durable laptop designed for students with long battery life.",

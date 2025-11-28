@@ -12,7 +12,7 @@ export type EventType = {
   _id: string;
   title: string;
   description: string;
-  embeddedDescription?: number[];
+  embeddedDescription: number[];
   startTime: Date;
   endTime: Date;
   venueId?: string;
@@ -43,7 +43,7 @@ const locationSchema = new mongoose.Schema(
 const eventSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
-  embeddedDescription: { type: [Number], required: false },
+  embeddedDescription: [{ type: Number, required: true }],
   startTime: { type: Date, required: true },
   endTime: { type: Date, required: true },
   venueId: {
